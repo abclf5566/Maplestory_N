@@ -21,6 +21,7 @@
             --epic-color: #a569bd;
             --unique-color: #f1c40f;
             --legendary-color: #2ecc71;
+            --confidence-color: #4ecdc4;
         }
 
         * {
@@ -74,7 +75,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         .section-title {
@@ -205,15 +205,12 @@
             overflow-y: auto;
             flex: 1;
         }
-        
         .results-container {
           grid-column: 1 / -1;
           grid-row: 2 / 3;
-          /* 加這兩行讓內部 .results 可以 flex:1 */
           display: flex;
           flex-direction: column;
         }
-        
         .results {
           display: flex;
           flex: 1;
@@ -232,23 +229,26 @@
 
         /* 階級卡片樣式 */
         .stage-cards {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 8px;
         }
 
         .stage-card {
-            flex: 1;
-            min-width: 150px;
             background-color: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 10px;
-            text-align: center;
+            border-radius: 12px;
+            padding: 8px;
             border: 2px solid transparent;
             transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
+/*
+        .stage-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+*/
         .stage-card.rare-to-epic {
             border-color: var(--epic-color);
             background: linear-gradient(135deg, rgba(93, 173, 226, 0.1), rgba(165, 105, 189, 0.1));
@@ -264,38 +264,103 @@
             background: linear-gradient(135deg, rgba(241, 196, 15, 0.1), rgba(46, 204, 113, 0.1));
         }
 
-        .stage-title {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
+        .stage-header{
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 8px;
+          padding-bottom: 4px;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          justify-content: space-evenly;
         }
 
-        .cube-name {
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-bottom: 8px;
+        /* 標題與方塊名稱同排顯示時的細部字級、間距 */
+        .stage-title{
+          font-size: 0.8rem;
+          margin: 0;
+          flex-shrink: 0;
         }
 
-        .stage-stats {
-            display: flex;
-            justify-content: space-around;
-            font-size: 0.7rem;
+        .cube-name{
+          font-size: 0.95rem;
+          font-weight: 600;
+          margin: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .stage-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
         }
 
         .stat-item {
             text-align: center;
         }
 
-        .stat-value {
-            display: block;
+        .stat-main {
+            font-size: 1.4rem;
             font-weight: bold;
-            font-size: 0.8rem;
             color: var(--text-primary);
+            margin-bottom: 2px;
         }
 
         .stat-label {
+            font-size: 0.7rem;
             color: var(--text-secondary);
-            font-size: 0.65rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-range {
+            font-size: 0.75rem;
+            color: var(--confidence-color);
+        }
+
+        /* 信賴區間樣式 */
+        .confidence-selector {
+            margin-bottom: 10px;
+        }
+
+        .confidence-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .confidence-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.75rem;
+        }
+
+        .confidence-btn:hover {
+            border-color: var(--confidence-color);
+            color: var(--confidence-color);
+        }
+
+        .confidence-btn.active {
+            background-color: var(--confidence-color);
+            color: var(--bg-primary);
+            border-color: var(--confidence-color);
+            font-weight: bold;
+        }
+
+        .probability-display {
+            background-color: rgba(78, 205, 196, 0.1);
+            border: 1px solid var(--confidence-color);
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 0.7rem;
+            text-align: center;
         }
 
         /* 總結樣式重新設計 */
@@ -396,6 +461,20 @@
             font-size: 0.75rem;
         }
 
+        .info-tooltip {
+            display: inline-block;
+            background-color: var(--confidence-color);
+            color: var(--bg-primary);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+            cursor: help;
+            font-weight: bold;
+        }
 
         /* 手機優化 */
         @media (max-width: 600px) {
@@ -470,6 +549,16 @@
                     <label for="blackPrice">Black Cube 價格</label>
                     <input type="number" id="blackPrice" min="0" step="0.01" placeholder="輸入價格" oninput="autoCalculate()" onchange="autoCalculate()">
                 </div>
+                <div class="confidence-selector">
+                    <label>信賴區間</label>
+                    <div class="confidence-buttons">
+                        <button class="confidence-btn" data-confidence="75%">75%</button>
+                        <button class="confidence-btn" data-confidence="80%">80%</button>
+                        <button class="confidence-btn" data-confidence="90%">90%</button>
+                        <button class="confidence-btn active" data-confidence="95%">95%</button>
+                        <button class="confidence-btn" data-confidence="99%">99%</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 階級設定 -->
@@ -523,7 +612,10 @@
 
             <!-- 計算結果 -->
             <div class="card results-container">
-                <h2 class="section-title">計算結果</h2>
+                <h2 class="section-title">
+                    計算結果
+                    <span class="info-tooltip" title="使用 Wilson Score 95% 信賴區間計算">?</span>
+                </h2>
                 <div class="results" id="results">
                     <div id="resultContent"></div>
                 </div>
@@ -532,224 +624,149 @@
     </div>
 
     <script>
-        // 各方塊升級機率（%）
-        const probs = {
-            "Occult Cube": {"Rare→Epic": 0.9901},
-            "Red Cube": {
-                "Rare→Epic": 6.0,
-                "Epic→Unique": 1.8,
-                "Unique→Legendary": 0.3
-            },
-            "Black Cube": {
-                "Rare→Epic": 15.0,
-                "Epic→Unique": 3.5,
-                "Unique→Legendary": 1.0
-            }
-        };
-
-        const rankMap = {
-            '1': 'Rare',
-            '2': 'Epic',
-            '3': 'Unique',
-            '4': 'Legendary'
-        };
-
-        const rankMapChinese = {
-            'Rare': '稀有',
-            'Epic': '史詩',
-            'Unique': '獨特',
-            'Legendary': '傳說'
-        };
-
-        const stageNames = ["Rare→Epic", "Epic→Unique", "Unique→Legendary"];
-        const idxMap = {'Rare': 0, 'Epic': 1, 'Unique': 2, 'Legendary': 3};
-
-        // 加入防抖機制以提升效能
-        let calculateTimeout;
-        
-        function autoCalculate() {
-            // 清除之前的計時器
-            clearTimeout(calculateTimeout);
-            
-            // 清除錯誤訊息
-            document.getElementById('errorMessage').style.display = 'none';
-            
-            // 設定新的計時器，延遲100ms執行
-            calculateTimeout = setTimeout(() => {
-                // 檢查是否所有必要的輸入都已填寫
-                const occultPrice = document.getElementById('occultPrice').value;
-                const redPrice = document.getElementById('redPrice').value;
-                const blackPrice = document.getElementById('blackPrice').value;
-                const currentRadio = document.querySelector('input[name="current"]:checked');
-                const targetRadio = document.querySelector('input[name="target"]:checked');
-                
-                // 如果有任何必要輸入未填寫，則不計算
-                if (!occultPrice || !redPrice || !blackPrice || !currentRadio || !targetRadio) {
-                    document.getElementById('results').style.display = 'none';
-                    return;
-                }
-                
-                // 執行計算
-                calculate();
-            }, 100);
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            document.getElementById('results').style.display = 'none';
-        }
-
-        // 格式化大數字
-        function formatNumber(num) {
-            if (num >= 100000000) {
-                return (num / 100000000).toFixed(2) + '億';
-            } else if (num >= 10000) {
-                return (num / 10000).toFixed(2) + '萬';
-            } else {
-                return num.toFixed(2);
-            }
-        }
-
-        // 格式化數字加逗號
-        function addCommas(num) {
-            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        }
-
-        function calculate() {
-            // 清除先前的錯誤訊息
-            document.getElementById('errorMessage').style.display = 'none';
-
-            // 取得價格
-            const costs = {
-                "Occult Cube": parseFloat(document.getElementById('occultPrice').value),
-                "Red Cube": parseFloat(document.getElementById('redPrice').value),
-                "Black Cube": parseFloat(document.getElementById('blackPrice').value)
-            };
-
-            // 檢查價格是否有效
-            if (isNaN(costs["Occult Cube"]) || isNaN(costs["Red Cube"]) || isNaN(costs["Black Cube"]) || 
-                costs["Occult Cube"] <= 0 || costs["Red Cube"] <= 0 || costs["Black Cube"] <= 0) {
-                showError('請輸入有效的方塊價格！');
-                return;
-            }
-
-            // 取得當前和目標階級
-            const currentRadio = document.querySelector('input[name="current"]:checked');
-            const targetRadio = document.querySelector('input[name="target"]:checked');
-
-            if (!currentRadio || !targetRadio) {
-                showError('請選擇當前和目標階級！');
-                return;
-            }
-
-            const curRank = rankMap[currentRadio.value];
-            const tgtRank = rankMap[targetRadio.value];
-            const curIdx = idxMap[curRank];
-            const tgtIdx = idxMap[tgtRank];
-
-            if (tgtIdx <= curIdx) {
-                if (tgtIdx === curIdx) {
-                    showError('當前已是目標階級，無需升階！');
-                } else {
-                    showError('目標階級不能低於當前階級！');
-                }
-                return;
-            }
-
-            let totalTries = 0;
-            let totalCost = 0;
-            let stageCardsHTML = '<div class="stage-cards">';
-
-            // 計算每個階段
-            for (let i = curIdx; i < tgtIdx; i++) {
-                const stage = stageNames[i];
-                const candidates = {};
-
-                // 篩選可用方塊
-                for (const [cube, sp] of Object.entries(probs)) {
-                    if (stage in sp && !(cube === "Occult Cube" && stage !== "Rare→Epic")) {
-                        const rate = sp[stage] / 100.0;
-                        const avgTries = 1 / rate;
-                        const avgCost = avgTries * costs[cube];
-                        candidates[cube] = {tries: avgTries, cost: avgCost};
-                    }
-                }
-
-                // 找出最佳方案
-                let bestCube = null;
-                let bestData = {cost: Infinity};
-
-                for (const [cube, data] of Object.entries(candidates)) {
-                    if (data.cost < bestData.cost) {
-                        bestCube = cube;
-                        bestData = data;
-                    }
-                }
-
-                totalTries += bestData.tries;
-                totalCost += bestData.cost;
-
-                // 判斷階段樣式
-                let stageClass = '';
-                if (stage === 'Rare→Epic') stageClass = 'rare-to-epic';
-                else if (stage === 'Epic→Unique') stageClass = 'epic-to-unique';
-                else if (stage === 'Unique→Legendary') stageClass = 'unique-to-legendary';
-
-                stageCardsHTML += `
-                    <div class="stage-card ${stageClass}">
-                        <div class="stage-title">${stage}</div>
-                        <div class="cube-name">${bestCube}</div>
-                        <div class="stage-stats">
-                            <div class="stat-item">
-                                <span class="stat-value">${bestData.tries.toFixed(0)}</span>
-                                <span class="stat-label">次</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-value">${formatNumber(bestData.cost)}</span>
-                                <span class="stat-label">花費</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            stageCardsHTML += '</div>';
-
-            // 總結
-            const summaryHTML = `
-                <div class="summary">
-                    <div class="summary-header">
-                        <span class="rank-badge ${curRank.toLowerCase()}">${rankMapChinese[curRank]}</span>
-                        <span class="arrow">→</span>
-                        <span class="rank-badge ${tgtRank.toLowerCase()}">${rankMapChinese[tgtRank]}</span>
-                    </div>
-                    <div class="summary-stats">
-                        <div class="summary-stat">
-                            <div class="summary-stat-label">平均總次數</div>
-                            <div class="summary-stat-value">${totalTries.toFixed(0)}</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="summary-stat-label">平均總花費</div>
-                            <div class="summary-stat-value">${formatNumber(totalCost)}</div>
-                            <div class="cost-formatted">${addCommas(totalCost)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // 顯示結果
-            document.getElementById('resultContent').innerHTML = stageCardsHTML + summaryHTML;
-            document.getElementById('results').style.display = 'block';
-        }
-
-        // Enter 鍵觸發計算
-        document.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                autoCalculate();
-            }
+      /* ---------- 升級機率 ---------- */
+      const probs = {
+        "Occult Cube": {"Rare→Epic": 0.9901},
+        "Red Cube":    {"Rare→Epic": 6.0,"Epic→Unique": 1.8,"Unique→Legendary": 0.3},
+        "Black Cube":  {"Rare→Epic":15.0,"Epic→Unique": 3.5,"Unique→Legendary": 1.0}
+      };
+      /* ---------- 樣本量 (可自行調) ---------- */
+      const sampleSizes = {
+        "Occult Cube": {"Rare→Epic":10000},
+        "Red Cube":    {"Rare→Epic": 5000,"Epic→Unique":3000,"Unique→Legendary":2000},
+        "Black Cube":  {"Rare→Epic": 3000,"Epic→Unique":2000,"Unique→Legendary":1500}
+      };
+      /* ---------- 其他映射 ---------- */
+      const rankMap = {'1':'Rare','2':'Epic','3':'Unique','4':'Legendary'};
+      const rankCN  = {Rare:'稀有',Epic:'史詩',Unique:'獨特',Legendary:'傳說'};
+      const stages  = ["Rare→Epic","Epic→Unique","Unique→Legendary"];
+      const idx     = {Rare:0,Epic:1,Unique:2,Legendary:3};
+      
+      /* ---------- Z 對照表 ---------- */
+      const Z_table = {"75%":1.15,"80%":1.28,"90%":1.64,"95%":1.96,"99%":2.58};
+      
+      /* ---------- 信賴按鈕切換 ---------- */
+      document.querySelectorAll('.confidence-btn').forEach(btn=>{
+        btn.addEventListener('click',e=>{
+          document.querySelectorAll('.confidence-btn').forEach(b=>b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          autoCalculate();                                   // 立即重算
         });
-    </script>
+      });
+      
+      /* ---------- Wilson CI ---------- */
+      function wilsonCI(k,n){
+        const conf = document.querySelector('.confidence-btn.active')?.dataset.confidence || "95%";
+        const z = Z_table[conf];
+        const z2=z*z, phat=k/n, denom=1+z2/n;
+        const center=(phat+z2/(2*n))/denom;
+        const spread=z*Math.sqrt(phat*(1-phat)/n+z2/(4*n*n))/denom;
+        return {lower:Math.max(0,center-spread), upper:Math.min(1,center+spread), conf};
+      }
+      /* ---------- 將機率轉成嘗試次數區間 ---------- */
+      function triesRange(p,n){
+        const {lower,upper,conf}=wilsonCI(Math.round(p*n),n);
+        return {
+          min:1/upper, max:1/lower, expected:1/p,
+          lowerProb:lower, upperProb:upper, conf
+        };
+      }
+      
+      /* ---------- 防抖 ---------- */
+      let t; function autoCalculate(){ hideErr();clearTimeout(t); t=setTimeout(calc,120); }
+      
+      /* ---------- 工具 ---------- */
+      const id=x=>document.getElementById(x);
+      const qs=x=>document.querySelector(x);
+      const fmt=n=>n>=1e8?(n/1e8).toFixed(2)+'億':n>=1e4?(n/1e4).toFixed(2)+'萬':n.toFixed(2);
+      const comma=n=>n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+      
+      /* ---------- 主計算 ---------- */
+      function calc(){
+        hideErr();
+        const occ=+id('occultPrice').value, red=+id('redPrice').value, blk=+id('blackPrice').value;
+        const cur=qs('input[name="current"]:checked'), tgt=qs('input[name="target"]:checked');
+        if(!occ||!red||!blk||!cur||!tgt){id('results').style.display='none'; return;}
+      
+        const prices={"Occult Cube":occ,"Red Cube":red,"Black Cube":blk};
+        const curR=rankMap[cur.value], tgtR=rankMap[tgt.value];
+        if(idx[tgtR]<=idx[curR]){ showErr(idx[tgtR]===idx[curR]?'當前已是目標階級':'目標階級不能低於當前'); return;}
+      
+        let tMin=0,tMax=0,tExp=0,cMin=0,cMax=0,cExp=0, html=`<div class="stage-cards">`;
+        for(let i=idx[curR]; i<idx[tgtR]; i++){
+          const stage=stages[i]; const cand={};
+          for(const [cube,sp] of Object.entries(probs)){
+            if(!(stage in sp)|| (cube==="Occult Cube"&&stage!=="Rare→Epic")) continue;
+            const p=sp[stage]/100, N=sampleSizes[cube][stage]||1000, tr=triesRange(p,N);
+            cand[cube]={tr, costMin:tr.min*prices[cube], costMax:tr.max*prices[cube], costExp:tr.expected*prices[cube], p};
+          }
+          let best=[null,{costExp:1/0}];
+          for(const [c,d] of Object.entries(cand)) if(d.costExp<best[1].costExp) best=[c,d];
+          const [bestCube,data]=best;
+      
+          tMin+=data.tr.min; tMax+=data.tr.max; tExp+=data.tr.expected;
+          cMin+=data.costMin; cMax+=data.costMax; cExp+=data.costExp;
+      
+          const cls=stage==='Rare→Epic'?'rare-to-epic':stage==='Epic→Unique'?'epic-to-unique':'unique-to-legendary';
+          html+=`
+            <div class="stage-card ${cls}">
+              <div class="stage-header">
+                <div class="stage-title">${stage}</div>
+                <div class="cube-name">${bestCube}</div>
+              </div>
+              <div class="stage-content">
+                <div class="stat-item">
+                  <div class="stat-main">${data.tr.expected.toFixed(0)}</div>
+                  <div class="stat-label">期望次數</div>
+                  <div class="stat-range">${data.tr.min.toFixed(0)} - ${data.tr.max.toFixed(0)}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-main">${fmt(data.costExp)}</div>
+                  <div class="stat-label">期望花費</div>
+                  <div class="stat-range">${fmt(data.costMin)} - ${fmt(data.costMax)}</div>
+                </div>
+              </div>
+              <div class="probability-display">
+                機率: ${(data.p*100).toFixed(2)}%<br>
+                ${data.tr.conf} CI: ${(data.tr.lowerProb*100).toFixed(3)}% - ${(data.tr.upperProb*100).toFixed(3)}%
+              </div>
+            </div>`;
+        }
+        html+='</div>';
+      
+        const conf = document.querySelector('.confidence-btn.active')?.dataset.confidence || "95%";
+        const summary=`
+          <div class="summary">
+            <div class="summary-header">
+              <span class="rank-badge ${curR.toLowerCase()}">${rankCN[curR]}</span>
+              <span class="arrow">→</span>
+              <span class="rank-badge ${tgtR.toLowerCase()}">${rankCN[tgtR]}</span>
+            </div>
+            <div class="summary-stats">
+              <div class="summary-stat">
+                <div class="summary-stat-label">期望總次數</div>
+                <div class="summary-stat-value">${tExp.toFixed(0)}</div>
+                <div class="stat-range">${conf} CI: ${tMin.toFixed(0)} - ${tMax.toFixed(0)}</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-label">期望總花費</div>
+                <div class="summary-stat-value">${fmt(cExp)}</div>
+                <div class="cost-formatted">${comma(cExp)}</div>
+                <div class="stat-range">${conf} CI: ${fmt(cMin)} - ${fmt(cMax)}</div>
+              </div>
+            </div>
+          </div>`;
+      
+        id('resultContent').innerHTML=html+summary;
+        id('results').style.display='block';
+        qs('.info-tooltip').title=`使用 Wilson Score ${conf} 信賴區間計算`;
+      }
+      /* ---------- 錯誤顯示 ---------- */
+      function showErr(msg){ const e=id('errorMessage'); e.textContent=msg; e.style.display='block'; id('results').style.display='none'; }
+      function hideErr(){ id('errorMessage').style.display='none'; }
+      /* ---------- Enter 觸發 ---------- */
+      document.addEventListener('keypress',e=>{if(e.key==='Enter')autoCalculate();});
+      </script>
+      
 </body>
 </html>
