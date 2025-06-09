@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>楓之谷潛能花費計算</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #252525;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --accent: #ff6b6b;
+            --accent-hover: #ff5252;
+            --border: #333;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --rare-color: #5dade2;
+            --epic-color: #a569bd;
+            --unique-color: #f1c40f;
+            --legendary-color: #2ecc71;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 5px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 280px 1fr;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+            max-height: calc(100vh - 60px);
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 4px;
+        }
+
+        .input-group {
+            margin-bottom: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .radio-option {
+            position: relative;
+        }
+
+        .radio-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .radio-option label {
+            display: block;
+            padding: 8px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: var(--bg-tertiary);
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+
+        /* 階級專屬顏色效果 */
+        .radio-option input[type="radio"][value="1"]:checked + label {
+            border-color: var(--rare-color);
+            background-color: rgba(93, 173, 226, 0.1);
+            color: var(--rare-color);
+            box-shadow: 0 0 10px rgba(93, 173, 226, 0.3);
+        }
+
+        .radio-option input[type="radio"][value="2"]:checked + label {
+            border-color: var(--epic-color);
+            background-color: rgba(165, 105, 189, 0.1);
+            color: var(--epic-color);
+            box-shadow: 0 0 15px rgba(165, 105, 189, 0.4);
+            text-shadow: 0 0 10px rgba(165, 105, 189, 0.6);
+        }
+
+        .radio-option input[type="radio"][value="3"]:checked + label {
+            border-color: var(--unique-color);
+            background-color: rgba(241, 196, 15, 0.1);
+            color: var(--unique-color);
+            box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+            animation: uniqueGlow 2s ease-in-out infinite;
+        }
+
+        .radio-option input[type="radio"][value="4"]:checked + label {
+            border-color: var(--legendary-color);
+            background-color: rgba(46, 204, 113, 0.1);
+            color: var(--legendary-color);
+            box-shadow: 0 0 25px rgba(46, 204, 113, 0.6);
+            animation: legendaryGlow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes uniqueGlow {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(241, 196, 15, 0.8),
+                            0 0 20px rgba(241, 196, 15, 0.6),
+                            0 0 30px rgba(241, 196, 15, 0.4);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(241, 196, 15, 1),
+                            0 0 30px rgba(241, 196, 15, 0.8),
+                            0 0 40px rgba(241, 196, 15, 0.6);
+            }
+        }
+
+        @keyframes legendaryGlow {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(46, 204, 113, 0.8),
+                            0 0 20px rgba(46, 204, 113, 0.6),
+                            0 0 30px rgba(46, 204, 113, 0.4);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(46, 204, 113, 1),
+                            0 0 30px rgba(46, 204, 113, 0.8),
+                            0 0 40px rgba(46, 204, 113, 0.6);
+            }
+        }
+
+        .results {
+            display: none;
+            animation: fadeIn 0.5s;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            background-color: var(--bg-tertiary);
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            border-left: 3px solid var(--success);
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .result-item strong {
+            color: var(--accent);
+        }
+
+        .summary {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(254, 202, 87, 0.1) 100%);
+            border: 2px solid var(--accent);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .summary h3 {
+            margin-bottom: 5px;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .summary p {
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+
+        .error-message {
+            background-color: rgba(244, 67, 54, 0.1);
+            border: 2px solid var(--error);
+            color: var(--error);
+            padding: 6px;
+            border-radius: 4px;
+            margin-top: 8px;
+            text-align: center;
+            display: none;
+            font-size: 0.75rem;
+        }
+
+        /* 平板優化 */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto 1fr;
+                max-height: none;
+            }
+            
+            .results-container {
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* 手機優化 */
+        @media (max-width: 600px) {
+            .container {
+                height: auto;
+                min-height: 100vh;
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+                margin-bottom: 8px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .card {
+                padding: 10px;
+            }
+
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 結果容器滾動條樣式 */
+        .results::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .results::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        .results::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .results::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍁 楓之谷潛能花費計算 🍁</h1>
+
+        <div class="main-grid">
+            <!-- 方塊價格設定 -->
+            <div class="card">
+                <h2 class="section-title">方塊價格設定</h2>
+                <div class="input-group">
+                    <label for="occultPrice">Occult Cube 價格</label>
+                    <input type="number" id="occultPrice" min="0" step="0.01" placeholder="輸入價格" oninput="autoCalculate()" onchange="autoCalculate()">
+                </div>
+                <div class="input-group">
+                    <label for="redPrice">Red Cube 價格</label>
+                    <input type="number" id="redPrice" min="0" step="0.01" placeholder="輸入價格" oninput="autoCalculate()" onchange="autoCalculate()">
+                </div>
+                <div class="input-group">
+                    <label for="blackPrice">Black Cube 價格</label>
+                    <input type="number" id="blackPrice" min="0" step="0.01" placeholder="輸入價格" oninput="autoCalculate()" onchange="autoCalculate()">
+                </div>
+            </div>
+
+            <!-- 階級設定 -->
+            <div class="card">
+                <h2 class="section-title">階級設定</h2>
+                <div class="input-group">
+                    <label>當前裝備階級</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="currentRare" name="current" value="1" onchange="autoCalculate()">
+                            <label for="currentRare">Rare</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="currentEpic" name="current" value="2" onchange="autoCalculate()">
+                            <label for="currentEpic">Epic</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="currentUnique" name="current" value="3" onchange="autoCalculate()">
+                            <label for="currentUnique">Unique</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="currentLegendary" name="current" value="4" onchange="autoCalculate()">
+                            <label for="currentLegendary">Legendary</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>目標裝備階級</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="targetRare" name="target" value="1" onchange="autoCalculate()">
+                            <label for="targetRare">Rare</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="targetEpic" name="target" value="2" onchange="autoCalculate()">
+                            <label for="targetEpic">Epic</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="targetUnique" name="target" value="3" onchange="autoCalculate()">
+                            <label for="targetUnique">Unique</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="targetLegendary" name="target" value="4" onchange="autoCalculate()">
+                            <label for="targetLegendary">Legendary</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <!-- 計算結果 -->
+            <div class="card results-container">
+                <h2 class="section-title">計算結果</h2>
+                <div class="results" id="results">
+                    <div id="resultContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 各方塊升級機率（%）
+        const probs = {
+            "Occult Cube": {"Rare→Epic": 0.9901},
+            "Red Cube": {
+                "Rare→Epic": 6.0,
+                "Epic→Unique": 1.8,
+                "Unique→Legendary": 0.3
+            },
+            "Black Cube": {
+                "Rare→Epic": 15.0,
+                "Epic→Unique": 3.5,
+                "Unique→Legendary": 1.0
+            }
+        };
+
+        const rankMap = {
+            '1': 'Rare',
+            '2': 'Epic',
+            '3': 'Unique',
+            '4': 'Legendary'
+        };
+
+        const rankMapChinese = {
+            'Rare': '稀有',
+            'Epic': '史詩',
+            'Unique': '獨特',
+            'Legendary': '傳說'
+        };
+
+        const stageNames = ["Rare→Epic", "Epic→Unique", "Unique→Legendary"];
+        const idxMap = {'Rare': 0, 'Epic': 1, 'Unique': 2, 'Legendary': 3};
+
+        // 加入防抖機制以提升效能
+        let calculateTimeout;
+        
+        function autoCalculate() {
+            // 清除之前的計時器
+            clearTimeout(calculateTimeout);
+            
+            // 清除錯誤訊息
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // 設定新的計時器，延遲100ms執行
+            calculateTimeout = setTimeout(() => {
+                // 檢查是否所有必要的輸入都已填寫
+                const occultPrice = document.getElementById('occultPrice').value;
+                const redPrice = document.getElementById('redPrice').value;
+                const blackPrice = document.getElementById('blackPrice').value;
+                const currentRadio = document.querySelector('input[name="current"]:checked');
+                const targetRadio = document.querySelector('input[name="target"]:checked');
+                
+                // 如果有任何必要輸入未填寫，則不計算
+                if (!occultPrice || !redPrice || !blackPrice || !currentRadio || !targetRadio) {
+                    document.getElementById('results').style.display = 'none';
+                    return;
+                }
+                
+                // 執行計算
+                calculate();
+            }, 100);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function calculate() {
+            // 清除先前的錯誤訊息
+            document.getElementById('errorMessage').style.display = 'none';
+
+            // 取得價格
+            const costs = {
+                "Occult Cube": parseFloat(document.getElementById('occultPrice').value),
+                "Red Cube": parseFloat(document.getElementById('redPrice').value),
+                "Black Cube": parseFloat(document.getElementById('blackPrice').value)
+            };
+
+            // 檢查價格是否有效
+            if (isNaN(costs["Occult Cube"]) || isNaN(costs["Red Cube"]) || isNaN(costs["Black Cube"]) || 
+                costs["Occult Cube"] <= 0 || costs["Red Cube"] <= 0 || costs["Black Cube"] <= 0) {
+                showError('請輸入有效的方塊價格！');
+                return;
+            }
+
+            // 取得當前和目標階級
+            const currentRadio = document.querySelector('input[name="current"]:checked');
+            const targetRadio = document.querySelector('input[name="target"]:checked');
+
+            if (!currentRadio || !targetRadio) {
+                showError('請選擇當前和目標階級！');
+                return;
+            }
+
+            const curRank = rankMap[currentRadio.value];
+            const tgtRank = rankMap[targetRadio.value];
+            const curIdx = idxMap[curRank];
+            const tgtIdx = idxMap[tgtRank];
+
+            if (tgtIdx <= curIdx) {
+                if (tgtIdx === curIdx) {
+                    showError('當前已是目標階級，無需升階！');
+                } else {
+                    showError('目標階級不能低於當前階級！');
+                }
+                return;
+            }
+
+            let totalTries = 0;
+            let totalCost = 0;
+            let resultHTML = '';
+
+            // 計算每個階段
+            for (let i = curIdx; i < tgtIdx; i++) {
+                const stage = stageNames[i];
+                const candidates = {};
+
+                // 篩選可用方塊
+                for (const [cube, sp] of Object.entries(probs)) {
+                    if (stage in sp && !(cube === "Occult Cube" && stage !== "Rare→Epic")) {
+                        const rate = sp[stage] / 100.0;
+                        const avgTries = 1 / rate;
+                        const avgCost = avgTries * costs[cube];
+                        candidates[cube] = {tries: avgTries, cost: avgCost};
+                    }
+                }
+
+                // 找出最佳方案
+                let bestCube = null;
+                let bestData = {cost: Infinity};
+
+                for (const [cube, data] of Object.entries(candidates)) {
+                    if (data.cost < bestData.cost) {
+                        bestCube = cube;
+                        bestData = data;
+                    }
+                }
+
+                totalTries += bestData.tries;
+                totalCost += bestData.cost;
+
+                resultHTML += `
+                    <div class="result-item">
+                        <strong>${stage}</strong> → 推薦：<strong>${bestCube}</strong>
+                        <br>平均 <strong>${bestData.tries.toFixed(2)}</strong> 次，花費 <strong>${bestData.cost.toFixed(2)}</strong>
+                    </div>
+                `;
+            }
+
+            // 總結
+            resultHTML += `
+                <div class="summary">
+                    <h3>總計</h3>
+                    <p>從 <strong>${rankMapChinese[curRank]}</strong> → <strong>${rankMapChinese[tgtRank]}</strong></p>
+                    <p>平均總次數：<strong>${totalTries.toFixed(2)}</strong> 次</p>
+                    <p>平均總花費：<strong>${totalCost.toFixed(2)}</strong></p>
+                </div>
+            `;
+
+            // 顯示結果
+            document.getElementById('resultContent').innerHTML = resultHTML;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Enter 鍵觸發計算
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                autoCalculate();
+            }
+        });
+    </script>
+</body>
+</html>
